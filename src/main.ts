@@ -6,22 +6,20 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
-
-
 const server = express();
 
 export const createNestServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
-  // Enable CORS with specific configuration
+  // Enable CORS for local development
   app.enableCors({
-    origin: true, // Allow all origins in development
+    origin: 'http://localhost:3001', // your frontend origin
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   });
 
-  // Validation
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -30,7 +28,7 @@ export const createNestServer = async (expressInstance: express.Express) => {
     }),
   );
 
-  // Swagger Setup
+  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Library Manager API')
     .setDescription('REST API for managing books, members, and borrowing operations')
@@ -48,7 +46,7 @@ export const createNestServer = async (expressInstance: express.Express) => {
     ],
   });
 
-  // Optional health check endpoint for Vercel monitoring
+  // Optional health check endpoint
   app.getHttpAdapter().get('/healthz', (_req, res) => res.send('OK'));
 
   await app.init();

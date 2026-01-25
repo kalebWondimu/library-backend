@@ -21,124 +21,58 @@ export class SeederService {
   ) {}
 
   async seed() {
-    // Seed genres
+    // ---------- Seed genres ----------
     const genres = [
-      'Fiction',
-      'Non-Fiction',
-      'Science Fiction',
-      'Mystery',
-      'Romance',
-      'Biography',
-      'History',
-      'Science',
-      'Technology',
-      'Philosophy',
+      'Fiction', 'Non-Fiction', 'Science Fiction', 'Mystery', 
+      'Romance', 'Biography', 'History', 'Science', 'Technology', 'Philosophy'
     ];
 
     const createdGenres = [];
-    for (const genreName of genres) {
-      const existingGenre = await this.genreRepository.findOne({
-        where: { name: genreName },
-      });
-
-      if (!existingGenre) {
-        const genre = this.genreRepository.create({ name: genreName });
-        createdGenres.push(await this.genreRepository.save(genre));
-      } else {
-        createdGenres.push(existingGenre);
+    for (const name of genres) {
+      let genre = await this.genreRepository.findOne({ where: { name } });
+      if (!genre) {
+        genre = this.genreRepository.create({ name });
+        genre = await this.genreRepository.save(genre);
       }
+      createdGenres.push(genre);
     }
 
-    // Seed sample books
+    // ---------- Seed books ----------
     const sampleBooks = [
-      {
-        title: 'The Great Gatsby',
-        author: 'F. Scott Fitzgerald',
-        published_year: 1925,
-        available_copies: 3,
-        genre_id: createdGenres[0].id, // Fiction
-      },
-      {
-        title: '1984',
-        author: 'George Orwell',
-        published_year: 1949,
-        available_copies: 2,
-        genre_id: createdGenres[2].id, // Science Fiction
-      },
-      {
-        title: 'Pride and Prejudice',
-        author: 'Jane Austen',
-        published_year: 1813,
-        available_copies: 4,
-        genre_id: createdGenres[4].id, // Romance
-      },
-      {
-        title: 'The Hobbit',
-        author: 'J.R.R. Tolkien',
-        published_year: 1937,
-        available_copies: 2,
-        genre_id: createdGenres[0].id, // Fiction
-      },
-      {
-        title: 'A Brief History of Time',
-        author: 'Stephen Hawking',
-        published_year: 1988,
-        available_copies: 1,
-        genre_id: createdGenres[7].id, // Science
-      },
+      { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', published_year: 1925, available_copies: 3, genre_id: createdGenres[0].id },
+      { title: '1984', author: 'George Orwell', published_year: 1949, available_copies: 2, genre_id: createdGenres[2].id },
+      { title: 'Pride and Prejudice', author: 'Jane Austen', published_year: 1813, available_copies: 4, genre_id: createdGenres[4].id },
+      { title: 'The Hobbit', author: 'J.R.R. Tolkien', published_year: 1937, available_copies: 2, genre_id: createdGenres[0].id },
+      { title: 'A Brief History of Time', author: 'Stephen Hawking', published_year: 1988, available_copies: 1, genre_id: createdGenres[7].id },
     ];
 
     for (const bookData of sampleBooks) {
-      const existingBook = await this.bookRepository.findOne({
-        where: { title: bookData.title, author: bookData.author },
-      });
-
-      if (!existingBook) {
-        const book = this.bookRepository.create(bookData);
+      let book = await this.bookRepository.findOne({ where: { title: bookData.title, author: bookData.author } });
+      if (!book) {
+        book = this.bookRepository.create(bookData);
         await this.bookRepository.save(book);
       }
     }
 
-    // Seed sample members
+    // ---------- Seed members ----------
     const sampleMembers = [
-      {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '555-0101',
-        join_date: new Date('2023-01-15'),
-      },
-      {
-        name: 'Jane Smith',
-        email: 'jane.smith@example.com',
-        phone: '555-0102',
-        join_date: new Date('2023-02-20'),
-      },
-      {
-        name: 'Bob Johnson',
-        email: 'bob.johnson@example.com',
-        phone: '555-0103',
-        join_date: new Date('2023-03-10'),
-      },
+      { name: 'John Doe', email: 'john.doe@example.com', phone: '555-0101', join_date: new Date('2023-01-15') },
+      { name: 'Jane Smith', email: 'jane.smith@example.com', phone: '555-0102', join_date: new Date('2023-02-20') },
+      { name: 'Bob Johnson', email: 'bob.johnson@example.com', phone: '555-0103', join_date: new Date('2023-03-10') },
     ];
 
     for (const memberData of sampleMembers) {
-      const existingMember = await this.memberRepository.findOne({
-        where: { email: memberData.email },
-      });
-
-      if (!existingMember) {
-        const member = this.memberRepository.create(memberData);
+      let member = await this.memberRepository.findOne({ where: { email: memberData.email } });
+      if (!member) {
+        member = this.memberRepository.create(memberData);
         await this.memberRepository.save(member);
       }
     }
 
-    // Seed default admin user
-    const adminUser = await this.staffRepository.findOne({
-      where: { username: 'admin' },
-    });
-
+    // ---------- Seed admin ----------
+    const adminUser = await this.staffRepository.findOne({ where: { username: 'admin' } });
     if (!adminUser) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const hashedPassword = await bcrypt.hash('password123', 10);
       const admin = this.staffRepository.create({
         username: 'admin',
         email: 'admin@library.com',
@@ -146,9 +80,23 @@ export class SeederService {
         role: 'admin',
       });
       await this.staffRepository.save(admin);
-      console.log('Default admin user created: admin@library.com/admin123');
+      console.log('Default admin user created: admin@library.com / password123');
+    }
+
+    // ---------- Seed librarian ----------
+    const librarianUser = await this.staffRepository.findOne({ where: { username: 'librarian' } });
+    if (!librarianUser) {
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      const librarian = this.staffRepository.create({
+        username: 'librarian',
+        email: 'librarian@library.com',
+        password_hash: hashedPassword,
+        role: 'librarian',
+      });
+      await this.staffRepository.save(librarian);
+      console.log('Default librarian user created: librarian@library.com / password123');
     }
 
     console.log('Database seeded successfully!');
   }
-} 
+}

@@ -14,13 +14,16 @@ import { Member } from './entities/member.entity';
 import { BorrowRecord } from './entities/borrow-record.entity';
 import { Genre } from './entities/genre.entity';
 import { Staff } from './entities/staff.entity';
+import 'dotenv/config';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      url: process.env.DATABASE_URL,          // Use DATABASE_URL from .env
+      ssl: process.env.DATABASE_SSL === 'true'
+        ? { rejectUnauthorized: false }      // Required for Neon
+        : false,
       entities: [Book, Member, BorrowRecord, Genre, Staff],
       synchronize: process.env.NODE_ENV !== 'production',
     }),
