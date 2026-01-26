@@ -13,8 +13,8 @@ export const createNestServer = async (expressInstance: express.Express) => {
   // ✅ Enable CORS for local + deployed frontend
   app.enableCors({
     origin: [
-      'http://localhost:3000',               // local React frontend
-      'https://library-frontend-xyz.vercel.app', // replace with your Vercel URL after deploy
+      'http://localhost:3000',               
+      'https://library-frontend-theta-drab.vercel.app', 
     ],
     methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
     allowedHeaders: ['Content-Type','Authorization','Accept'],
