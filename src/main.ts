@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -11,11 +10,14 @@ const server = express();
 export const createNestServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
-  // Enable CORS for local development
+  // ✅ Enable CORS for local + deployed frontend
   app.enableCors({
-    origin: 'http://localhost:3001', // your frontend origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    origin: [
+      'http://localhost:3000',               // local React frontend
+      'https://library-frontend-xyz.vercel.app', // replace with your Vercel URL after deploy
+    ],
+    methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','Accept'],
     credentials: true,
   });
 
@@ -38,13 +40,7 @@ export const createNestServer = async (expressInstance: express.Express) => {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api', app, document, {
-    customCssUrl: 'https://unpkg.com/swagger-ui-dist/swagger-ui.css',
-    customJs: [
-      'https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js',
-      'https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js',
-    ],
-  });
+  SwaggerModule.setup('api', app, document);
 
   // Optional health check endpoint
   app.getHttpAdapter().get('/healthz', (_req, res) => res.send('OK'));
