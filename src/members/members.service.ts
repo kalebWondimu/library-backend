@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Member } from '../entities/member.entity';
@@ -19,17 +23,32 @@ export class MembersService {
       ...createMemberDto,
       join_date: new Date(createMemberDto.join_date),
     });
-    return await this.membersRepository.save(member);
+    return this.membersRepository.save(member);
   }
 
-  async findAll(): Promise<Member[]> {
-    return await this.membersRepository.find();
+  // ✅ NOW returns members WITH active borrow count
+  async findAll() {
+    const members = await this.membersRepository.find();
+
+    return Promise.all(
+      members.map(async (member) => {
+        const activeBorrows = await this.borrowRecordsRepository.count({
+          where: {
+            member_id: member.id,
+            return_date: null,
+          },
+        });
+
+        return {
+          ...member,
+          activeBorrows,
+        };
+      }),
+    );
   }
 
   async findOne(id: number): Promise<Member> {
-    const member = await this.membersRepository.findOne({
-      where: { id },
-    });
+    const member = await this.membersRepository.findOne({ where: { id } });
 
     if (!member) {
       throw new NotFoundException(`Member with ID ${id} not found`);
@@ -41,21 +60,35 @@ export class MembersService {
   async update(id: number, updateMemberDto: UpdateMemberDto): Promise<Member> {
     const member = await this.findOne(id);
     Object.assign(member, updateMemberDto);
-    return await this.membersRepository.save(member);
+    return this.membersRepository.save(member);
   }
 
+  // ✅ BLOCK delete if active borrows exist
   async remove(id: number): Promise<void> {
+    const activeBorrows = await this.borrowRecordsRepository.count({
+      where: {
+        member_id: id,
+        return_date: null,
+      },
+    });
+
+    if (activeBorrows > 0) {
+      throw new BadRequestException(
+        'Cannot delete member with active borrowed books',
+      );
+    }
+
     const member = await this.findOne(id);
     await this.membersRepository.remove(member);
   }
 
   async getBorrowingHistory(memberId: number): Promise<BorrowRecord[]> {
-    await this.findOne(memberId); // Verify member exists
+    await this.findOne(memberId);
 
-    return await this.borrowRecordsRepository.find({
+    return this.borrowRecordsRepository.find({
       where: { member_id: memberId },
       relations: ['book', 'book.genre'],
       order: { borrow_date: 'DESC' },
     });
   }
-} 
+}
