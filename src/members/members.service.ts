@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IsNull } from 'typeorm';
 import { Member } from '../entities/member.entity';
 import { BorrowRecord } from '../entities/borrow-record.entity';
 import { CreateMemberDto, UpdateMemberDto } from '../dto/member.dto';
@@ -26,26 +27,26 @@ export class MembersService {
     return this.membersRepository.save(member);
   }
 
-  // ✅ NOW returns members WITH active borrow count
+  
   async findAll() {
-    const members = await this.membersRepository.find();
+  const members = await this.membersRepository.find();
 
-    return Promise.all(
-      members.map(async (member) => {
-        const activeBorrows = await this.borrowRecordsRepository.count({
-          where: {
-            member_id: member.id,
-            return_date: null,
-          },
-        });
+  return Promise.all(
+    members.map(async (member) => {
+      const activeBorrows = await this.borrowRecordsRepository.count({
+        where: {
+          member_id: member.id,
+          return_date: IsNull(),
+        },
+      });
 
-        return {
-          ...member,
-          activeBorrows,
-        };
-      }),
-    );
-  }
+      return {
+        ...member,
+        activeBorrows,
+      };
+    }),
+  );
+}
 
   async findOne(id: number): Promise<Member> {
     const member = await this.membersRepository.findOne({ where: { id } });
