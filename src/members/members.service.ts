@@ -37,7 +37,7 @@ export class MembersService {
         where: {
           member_id: member.id,
           return_date: IsNull(),
-        },
+        }
       });
 
       return {

@@ -11,6 +11,9 @@ export class Staff {
   @Column({ unique: true })
   email: string;
 
+  @Column({ nullable: true })
+  phone: string;
+
   @Column()
   password_hash: string;
 

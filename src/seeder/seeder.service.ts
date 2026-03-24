@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Genre } from '../entities/genre.entity';
@@ -8,7 +8,7 @@ import { Staff } from '../entities/staff.entity';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
-export class SeederService {
+export class SeederService implements OnModuleInit {
   constructor(
     @InjectRepository(Genre)
     private genreRepository: Repository<Genre>,
@@ -18,12 +18,12 @@ export class SeederService {
     private memberRepository: Repository<Member>,
     @InjectRepository(Staff)
     private staffRepository: Repository<Staff>,
-  ) {}
+  ) { }
 
   async seed() {
     // ---------- Seed genres ----------
     const genres = [
-      'Fiction', 'Non-Fiction', 'Science Fiction', 'Mystery', 
+      'Fiction', 'Non-Fiction', 'Science Fiction', 'Mystery',
       'Romance', 'Biography', 'History', 'Science', 'Technology', 'Philosophy'
     ];
 
@@ -99,4 +99,12 @@ export class SeederService {
 
     console.log('Database seeded successfully!');
   }
+
+  async onModuleInit() {
+    // Only seed in development environment
+    if (process.env.NODE_ENV !== 'production') {
+      await this.seed();
+    }
+  }
+}
 }

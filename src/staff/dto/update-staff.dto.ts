@@ -12,6 +12,11 @@ export class UpdateStaffDto {
   @IsEmail()
   email?: string;
 
+  @ApiPropertyOptional({ description: 'Phone number' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiPropertyOptional({ description: 'Password' })
   @IsOptional()
   @IsString()

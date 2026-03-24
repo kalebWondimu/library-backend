@@ -14,7 +14,7 @@ export class StaffService {
   constructor(
     @InjectRepository(Staff)
     private staffRepository: Repository<Staff>,
-  ) {}
+  ) { }
 
   async create(createStaffDto: CreateStaffDto): Promise<Staff> {
     // Check if username already exists
@@ -42,6 +42,7 @@ export class StaffService {
     const staff = this.staffRepository.create({
       username: createStaffDto.username,
       email: createStaffDto.email,
+      phone: createStaffDto.phone,
       password_hash: hashedPassword,
       role: createStaffDto.role,
     });
@@ -99,7 +100,7 @@ export class StaffService {
 
   async findAll(): Promise<Staff[]> {
     return await this.staffRepository.find({
-      select: ['id', 'username', 'role', 'email'], // Don't include password_hash
+      select: ['id', 'username', 'role', 'email', 'phone'], // Don't include password_hash
     });
   }
 
