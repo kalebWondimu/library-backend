@@ -20,7 +20,14 @@ export class SeederService implements OnModuleInit {
     private staffRepository: Repository<Staff>,
   ) { }
 
+  private async ensureStaffPhoneColumn() {
+    // In production with synchronize=false, this ensures phone exists on legacy DB tables
+    await this.staffRepository.query(`ALTER TABLE staff ADD COLUMN IF NOT EXISTS phone VARCHAR(255);`);
+  }
+
   async seed() {
+    await this.ensureStaffPhoneColumn();
+
     // ---------- Seed genres ----------
     const genres = [
       'Fiction', 'Non-Fiction', 'Science Fiction', 'Mystery',
@@ -101,7 +108,10 @@ export class SeederService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // Only seed in development environment
+    // Ensure schema compatibility for phone field in staff table
+    await this.ensureStaffPhoneColumn();
+
+    // Seed sample data in non-production only
     if (process.env.NODE_ENV !== 'production') {
       await this.seed();
     }

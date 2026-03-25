@@ -10,6 +10,11 @@ export class CreateStaffDto {
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: '555-123-4567', description: 'Phone number', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiProperty({ example: 'password123', description: 'Password' })
   @IsString()
   @MinLength(6)
