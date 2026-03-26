@@ -13,7 +13,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
+  constructor(private readonly membersService: MembersService) { }
 
   @Post()
   @Roles('admin', 'librarian')
@@ -46,6 +46,13 @@ export class MembersController {
   @ApiParam({ name: 'id', description: 'Member ID' })
   getBorrowingHistory(@Param('id') id: string): Promise<BorrowRecord[]> {
     return this.membersService.getBorrowingHistory(+id);
+  }
+
+  @Get('reports/activity')
+  @ApiOperation({ summary: 'Get member activity report' })
+  @ApiResponse({ status: 200, description: 'Member activity list', type: [Object] })
+  getMemberActivity() {
+    return this.membersService.getMemberActivity();
   }
 
   @Patch(':id')

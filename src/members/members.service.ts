@@ -17,7 +17,7 @@ export class MembersService {
     private membersRepository: Repository<Member>,
     @InjectRepository(BorrowRecord)
     private borrowRecordsRepository: Repository<BorrowRecord>,
-  ) {}
+  ) { }
 
   async create(createMemberDto: CreateMemberDto): Promise<Member> {
     const member = this.membersRepository.create({
@@ -27,26 +27,26 @@ export class MembersService {
     return this.membersRepository.save(member);
   }
 
-  
+
   async findAll() {
-  const members = await this.membersRepository.find();
+    const members = await this.membersRepository.find();
 
-  return Promise.all(
-    members.map(async (member) => {
-      const activeBorrows = await this.borrowRecordsRepository.count({
-        where: {
-          member_id: member.id,
-          return_date: IsNull(),
-        }
-      });
+    return Promise.all(
+      members.map(async (member) => {
+        const activeBorrows = await this.borrowRecordsRepository.count({
+          where: {
+            member_id: member.id,
+            return_date: IsNull(),
+          }
+        });
 
-      return {
-        ...member,
-        activeBorrows,
-      };
-    }),
-  );
-}
+        return {
+          ...member,
+          activeBorrows,
+        };
+      }),
+    );
+  }
 
   async findOne(id: number): Promise<Member> {
     const member = await this.membersRepository.findOne({ where: { id } });
@@ -92,4 +92,33 @@ export class MembersService {
       order: { borrow_date: 'DESC' },
     });
   }
+
+  async getMemberActivity(): Promise<any> {
+    const members = await this.membersRepository.find();
+
+    const memberActivity = await Promise.all(
+      members.map(async (member) => {
+        const totalBorrows = await this.borrowRecordsRepository.count({
+          where: { member_id: member.id },
+        });
+
+        const outstandingBorrows = await this.borrowRecordsRepository.count({
+          where: { member_id: member.id, return_date: null },
+        });
+
+        return {
+          member_id: member.id,
+          name: member.name,
+          totalBorrows,
+          outstandingBorrows,
+        };
+      }),
+    );
+
+    // return top 10 active members by borrow count
+    return memberActivity
+      .sort((a, b) => b.totalBorrows - a.totalBorrows)
+      .slice(0, 10);
+  }
 }
+

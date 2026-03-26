@@ -15,7 +15,7 @@ export class BorrowRecordsService {
     private borrowRecordsRepository: Repository<BorrowRecord>,
     private booksService: BooksService,
     private membersService: MembersService,
-  ) {}
+  ) { }
 
   async borrowBook(borrowBookDto: BorrowBookDto): Promise<BorrowRecord> {
     // Verify book and member exist
@@ -68,7 +68,7 @@ export class BorrowRecordsService {
 
   async getOverdueBooks(): Promise<BorrowRecord[]> {
     const today = new Date();
-    
+
     return await this.borrowRecordsRepository.find({
       where: {
         due_date: LessThan(today),
@@ -88,6 +88,20 @@ export class BorrowRecordsService {
       .groupBy('genre.id')
       .addGroupBy('genre.name')
       .orderBy('borrow_count', 'DESC')
+      .getRawMany();
+  }
+
+  async getMostPopularBooks(): Promise<any[]> {
+    return await this.borrowRecordsRepository
+      .createQueryBuilder('borrowRecord')
+      .leftJoin('borrowRecord.book', 'book')
+      .select('book.id', 'book_id')
+      .addSelect('book.title', 'book_title')
+      .addSelect('COUNT(*)', 'borrow_count')
+      .groupBy('book.id')
+      .addGroupBy('book.title')
+      .orderBy('borrow_count', 'DESC')
+      .limit(10)
       .getRawMany();
   }
 

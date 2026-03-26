@@ -12,7 +12,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class BorrowRecordsController {
-  constructor(private readonly borrowRecordsService: BorrowRecordsService) {}
+  constructor(private readonly borrowRecordsService: BorrowRecordsService) { }
 
   @Post('borrow')
   @Roles('admin', 'librarian')
@@ -58,6 +58,13 @@ export class BorrowRecordsController {
   @ApiResponse({ status: 200, description: 'Most popular genres with borrow counts' })
   getMostPopularGenres(): Promise<any[]> {
     return this.borrowRecordsService.getMostPopularGenres();
+  }
+
+  @Get('reports/popular-books')
+  @ApiOperation({ summary: 'Get most popular books report' })
+  @ApiResponse({ status: 200, description: 'Most popular books with borrow counts' })
+  getMostPopularBooks(): Promise<any[]> {
+    return this.borrowRecordsService.getMostPopularBooks();
   }
 
   @Get('reports/summary')
