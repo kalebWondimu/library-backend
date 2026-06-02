@@ -16,13 +16,31 @@ import { Genre } from './entities/genre.entity';
 import { Staff } from './entities/staff.entity';
 import 'dotenv/config';
 
+const databaseUrl = process.env.DATABASE_URL || (() => {
+  if (
+    process.env.POSTGRES_HOST &&
+    process.env.POSTGRES_USER &&
+    process.env.POSTGRES_PASSWORD &&
+    process.env.POSTGRES_DATABASE
+  ) {
+    const host = process.env.POSTGRES_HOST;
+    const port = process.env.POSTGRES_PORT || '5432';
+    const user = encodeURIComponent(process.env.POSTGRES_USER);
+    const pass = encodeURIComponent(process.env.POSTGRES_PASSWORD);
+    const db = process.env.POSTGRES_DATABASE;
+    const sslQuery = process.env.DATABASE_SSL === 'true' ? '?sslmode=require' : '';
+    return `postgresql://${user}:${pass}@${host}:${port}/${db}${sslQuery}`;
+  }
+  return undefined;
+})();
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,          // Use DATABASE_URL from .env
+      url: databaseUrl,
       ssl: process.env.DATABASE_SSL === 'true'
-        ? { rejectUnauthorized: false }      // Required for Neon
+        ? { rejectUnauthorized: false }
         : false,
       entities: [Book, Member, BorrowRecord, Genre, Staff],
       synchronize: process.env.NODE_ENV !== 'production',

@@ -123,11 +123,13 @@ A REST API for managing a library system with books, members, and borrowing oper
 
 1. Clone the repository
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Start the development server:
+
    ```bash
    npm run start:dev
    ```
@@ -136,6 +138,27 @@ A REST API for managing a library system with books, members, and borrowing oper
    ```bash
    npm run seed
    ```
+
+If your app is deployed in production and you want the initial seed data to run on startup, set:
+
+```bash
+SEED_DATABASE=true
+```
+
+Then restart the app. This is useful after switching your database to a new Neon instance.
+
+If you are using Neon and your `.env` contains separate Postgres values rather than a full URL, the app now also supports:
+
+```bash
+POSTGRES_HOST=...
+POSTGRES_PORT=5432
+POSTGRES_USER=...
+POSTGRES_PASSWORD=...
+POSTGRES_DATABASE=...
+DATABASE_SSL=true
+```
+
+If you prefer, you can still set `DATABASE_URL` directly with the full Neon connection string.
 
 ## API Documentation
 
@@ -146,11 +169,14 @@ Once the server is running, visit `http://localhost:3000/api` for interactive Sw
 The API uses JWT (JSON Web Tokens) for authentication. Most endpoints require authentication.
 
 ### Default Admin User
+
 After seeding the database, you can login with:
-- **Username**: `admin`
-- **Password**: `admin123`
+
+- **Email**: `admin@library.com`
+- **Password**: `password123`
 
 ### Authentication Endpoints
+
 - `POST /auth/login` - Login with username and password
 - `POST /auth/signup` - Register a new staff member
 - `GET /auth/profile` - Get current user profile (requires authentication)
@@ -158,6 +184,7 @@ After seeding the database, you can login with:
 ## API Endpoints
 
 ### Books
+
 - `GET /books` - Get all books (with optional filtering)
 - `GET /books/:id` - Get a specific book
 - `POST /books` - Create a new book (requires admin/librarian role)
@@ -165,6 +192,7 @@ After seeding the database, you can login with:
 - `DELETE /books/:id` - Delete a book (requires admin role)
 
 ### Members
+
 - `GET /members` - Get all members
 - `GET /members/:id` - Get a specific member
 - `GET /members/:id/borrowing-history` - Get member's borrowing history
@@ -173,6 +201,7 @@ After seeding the database, you can login with:
 - `DELETE /members/:id` - Delete a member (requires admin role)
 
 ### Borrow Records
+
 - `GET /borrow-records` - Get all borrow records
 - `GET /borrow-records/:id` - Get a specific borrow record
 - `POST /borrow-records/borrow` - Borrow a book (requires admin/librarian role)
@@ -181,6 +210,7 @@ After seeding the database, you can login with:
 - `GET /borrow-records/reports/popular-genres` - Get most popular genres
 
 ### Genres
+
 - `GET /genres` - Get all genres
 - `GET /genres/:id` - Get a specific genre
 - `POST /genres` - Create a new genre (requires admin role)
@@ -190,6 +220,7 @@ After seeding the database, you can login with:
 ## Example Usage
 
 ### Login
+
 ```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
@@ -200,6 +231,7 @@ curl -X POST http://localhost:3000/auth/login \
 ```
 
 ### Create a Book (with authentication)
+
 ```bash
 # First, get the token from login
 TOKEN="your-jwt-token-here"
@@ -217,6 +249,7 @@ curl -X POST http://localhost:3000/books \
 ```
 
 ### Borrow a Book (with authentication)
+
 ```bash
 # First, get the token from login
 TOKEN="your-jwt-token-here"
@@ -232,6 +265,7 @@ curl -X POST http://localhost:3000/borrow-records/borrow \
 ```
 
 ### Get Overdue Books (with authentication)
+
 ```bash
 # First, get the token from login
 TOKEN="your-jwt-token-here"

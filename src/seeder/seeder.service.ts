@@ -76,6 +76,20 @@ export class SeederService implements OnModuleInit {
       }
     }
 
+    // ---------- Seed super admin ----------
+    const superAdminUser = await this.staffRepository.findOne({ where: { username: 'superadmin' } });
+    if (!superAdminUser) {
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      const superAdmin = this.staffRepository.create({
+        username: 'superadmin',
+        email: 'superadmin@library.com',
+        password_hash: hashedPassword,
+        role: 'super-admin',
+      });
+      await this.staffRepository.save(superAdmin);
+      console.log('Default super admin user created: superadmin@library.com / password123');
+    }
+
     // ---------- Seed admin ----------
     const adminUser = await this.staffRepository.findOne({ where: { username: 'admin' } });
     if (!adminUser) {
@@ -111,8 +125,8 @@ export class SeederService implements OnModuleInit {
     // Ensure schema compatibility for phone field in staff table
     await this.ensureStaffPhoneColumn();
 
-    // Seed sample data in non-production only
-    if (process.env.NODE_ENV !== 'production') {
+    // Seed sample data automatically in development or when explicitly enabled in production.
+    if (process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true') {
       await this.seed();
     }
   }
