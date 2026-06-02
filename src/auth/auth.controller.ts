@@ -12,12 +12,12 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly staffService: StaffService,
-  ) {}
+  ) { }
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login successful',
     schema: {
       type: 'object',
@@ -37,14 +37,23 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto) {
-    console.log(loginDto)
-    return this.authService.login(loginDto);
+    console.log('=== AUTH CONTROLLER LOGIN CALLED ===');
+    console.log('Email:', loginDto.email);
+    console.log('Password length:', loginDto.password?.length);
+    try {
+      const result = await this.authService.login(loginDto);
+      console.log('Login successful for:', loginDto.email);
+      return result;
+    } catch (error) {
+      console.log('Login failed:', error.message);
+      throw error;
+    }
   }
 
   @Post('signup')
   @ApiOperation({ summary: 'Register a new staff member' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Registration successful',
     schema: {
       type: 'object',
@@ -76,7 +85,7 @@ export class AuthController {
   //     password: 'admin123',
   //     role: 'admin' as const,
   //   };
-    
+
   //   try {
   //     const user = await this.staffService.create(adminData);
   //     return { message: 'Admin user created successfully', user: { id: user.id, username: user.username, email: user.email, role: user.role } };

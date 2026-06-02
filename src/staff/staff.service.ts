@@ -75,16 +75,19 @@ export class StaffService {
   }
 
   async validateUser(email: string, password: string): Promise<Staff | null> {
-    console.log('Validating user:', email);
+    console.log('=== VALIDATE USER ===');
+    console.log('Email:', email);
+    console.log('Password length:', password?.length);
 
     const user = await this.findByEmail(email);
-    console.log('User found in database:', user ? 'Yes' : 'No');
+    console.log('User found:', user ? `Yes (ID: ${user.id})` : 'No');
 
     if (!user) {
       console.log('User not found in database');
       return null;
     }
 
+    console.log('User password_hash exists:', !!user.password_hash);
     console.log('Comparing passwords...');
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     console.log('Password valid:', isPasswordValid);
