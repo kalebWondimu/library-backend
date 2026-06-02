@@ -43,7 +43,8 @@ const databaseUrl = process.env.DATABASE_URL || (() => {
         ? { rejectUnauthorized: false }
         : false,
       entities: [Book, Member, BorrowRecord, Genre, Staff],
-      synchronize: process.env.NODE_ENV !== 'production',
+      // Enable synchronize for fresh databases or when explicitly seeding
+      synchronize: process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true',
     }),
     BooksModule,
     MembersModule,
@@ -56,4 +57,4 @@ const databaseUrl = process.env.DATABASE_URL || (() => {
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

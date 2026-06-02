@@ -22,7 +22,17 @@ export class SeederService implements OnModuleInit {
 
   private async ensureStaffPhoneColumn() {
     // In production with synchronize=false, this ensures phone exists on legacy DB tables
-    await this.staffRepository.query(`ALTER TABLE staff ADD COLUMN IF NOT EXISTS phone VARCHAR(255);`);
+    // For fresh databases, the table may not exist yet; TypeORM will create it on first sync
+    try {
+      await this.staffRepository.query(`ALTER TABLE staff ADD COLUMN IF NOT EXISTS phone VARCHAR(255);`);
+    } catch (error) {
+      if (error.code === '42P01') {
+        // Table doesn't exist yet (fresh database), skip this step
+        console.log('Staff table not yet created; skipping phone column check.');
+      } else {
+        throw error;
+      }
+    }
   }
 
   async seed() {
@@ -127,7 +137,12 @@ export class SeederService implements OnModuleInit {
 
     // Seed sample data automatically in development or when explicitly enabled in production.
     if (process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true') {
-      await this.seed();
+      try {
+        await this.seed();
+      } catch (error) {
+        console.error('Seeding failed:', error.message);
+        // Don't crash the app if seeding fails; just log the error
+      }
     }
   }
 }
