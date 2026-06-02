@@ -35,6 +35,33 @@ export class SeederService implements OnModuleInit {
     }
   }
 
+  private async ensureDefaultStaffUser(email: string, username: string, role: string) {
+    const user = await this.staffRepository.findOne({ where: { email } });
+    const hashedPassword = await bcrypt.hash('password123', 10);
+
+    if (!user) {
+      const created = this.staffRepository.create({
+        username,
+        email,
+        password_hash: hashedPassword,
+        role,
+      });
+      await this.staffRepository.save(created);
+      console.log(`Default ${role} user created: ${email} / password123`);
+      return created;
+    }
+
+    if (!user.password_hash) {
+      user.password_hash = hashedPassword;
+      user.username = username;
+      user.role = role;
+      await this.staffRepository.save(user);
+      console.log(`Default ${role} password restored for existing user: ${email}`);
+    }
+
+    return user;
+  }
+
   async seed() {
     await this.ensureStaffPhoneColumn();
 
@@ -87,46 +114,13 @@ export class SeederService implements OnModuleInit {
     }
 
     // ---------- Seed super admin ----------
-    const superAdminUser = await this.staffRepository.findOne({ where: { username: 'superadmin' } });
-    if (!superAdminUser) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
-      const superAdmin = this.staffRepository.create({
-        username: 'superadmin',
-        email: 'superadmin@library.com',
-        password_hash: hashedPassword,
-        role: 'super-admin',
-      });
-      await this.staffRepository.save(superAdmin);
-      console.log('Default super admin user created: superadmin@library.com / password123');
-    }
+    await this.ensureDefaultStaffUser('superadmin@library.com', 'superadmin', 'super-admin');
 
     // ---------- Seed admin ----------
-    const adminUser = await this.staffRepository.findOne({ where: { username: 'admin' } });
-    if (!adminUser) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
-      const admin = this.staffRepository.create({
-        username: 'admin',
-        email: 'admin@library.com',
-        password_hash: hashedPassword,
-        role: 'admin',
-      });
-      await this.staffRepository.save(admin);
-      console.log('Default admin user created: admin@library.com / password123');
-    }
+    await this.ensureDefaultStaffUser('admin@library.com', 'admin', 'admin');
 
     // ---------- Seed librarian ----------
-    const librarianUser = await this.staffRepository.findOne({ where: { username: 'librarian' } });
-    if (!librarianUser) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
-      const librarian = this.staffRepository.create({
-        username: 'librarian',
-        email: 'librarian@library.com',
-        password_hash: hashedPassword,
-        role: 'librarian',
-      });
-      await this.staffRepository.save(librarian);
-      console.log('Default librarian user created: librarian@library.com / password123');
-    }
+    await this.ensureDefaultStaffUser('librarian@library.com', 'librarian', 'librarian');
 
     console.log('Database seeded successfully!');
   }

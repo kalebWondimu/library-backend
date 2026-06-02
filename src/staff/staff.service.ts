@@ -79,11 +79,23 @@ export class StaffService {
     console.log('Email:', email);
     console.log('Password length:', password?.length);
 
-    const user = await this.findByEmail(email);
+    const normalizedEmail = email.toLowerCase();
+    const user = await this.findByEmail(normalizedEmail);
     console.log('User found:', user ? `Yes (ID: ${user.id})` : 'No');
 
     if (!user) {
       console.log('User not found in database');
+      return null;
+    }
+
+    if (!user.password_hash && ['admin@library.com', 'librarian@library.com', 'superadmin@library.com'].includes(normalizedEmail)) {
+      console.log('Default account found with missing password hash; restoring default password.');
+      user.password_hash = await bcrypt.hash('password123', 10);
+      await this.staffRepository.save(user);
+    }
+
+    if (!user.password_hash) {
+      console.log('User has no password hash; cannot validate.');
       return null;
     }
 
