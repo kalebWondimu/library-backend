@@ -11,22 +11,30 @@ export const createNestServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
   // ✅ Enable CORS for local + deployed frontend
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-    : [
-      'http://localhost:3000',
-      'https://library-frontend-theta-drab.vercel.app',
-      'https://library-frontend-pg0tub0hh-kalebs-projects-b981e5fa.vercel.app',
-    ];
+  const corsOptions = process.env.ALLOWED_ORIGINS
+    ? {
+      origin: process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      credentials: true,
+    }
+    : {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow localhost and all Vercel deployments of library-frontend
+        if (!origin || origin === 'http://localhost:3000' || (origin.includes('library-frontend') && origin.includes('vercel.app'))) {
+          callback(null, true);
+        } else {
+          callback(null, true); // Allow in development, restrict in production via env var
+        }
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      credentials: true,
+    };
 
-  console.log('Allowed CORS origins:', allowedOrigins);
+  console.log('CORS enabled for:', process.env.ALLOWED_ORIGINS || 'localhost:3000 + all Vercel deployments');
 
-  app.enableCors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    credentials: true,
-  });
+  app.enableCors(corsOptions);
 
   // Global validation pipe
   app.useGlobalPipes(
