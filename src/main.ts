@@ -16,6 +16,7 @@ export const createNestServer = async (expressInstance: express.Express) => {
     : [
       'http://localhost:3000',
       'https://library-frontend-theta-drab.vercel.app',
+      'https://library-frontend-pg0tub0hh-kalebs-projects-b981e5fa.vercel.app',
     ];
 
   console.log('Allowed CORS origins:', allowedOrigins);
