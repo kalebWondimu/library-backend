@@ -129,8 +129,17 @@ export class SeederService implements OnModuleInit {
     // Ensure schema compatibility for phone field in staff table
     await this.ensureStaffPhoneColumn();
 
+    const shouldSeed = process.env.NODE_ENV !== 'production' ||
+      process.env.SEED_DATABASE?.toLowerCase() === 'true';
+
+    console.log('Seeder init:', {
+      NODE_ENV: process.env.NODE_ENV,
+      SEED_DATABASE: process.env.SEED_DATABASE,
+      shouldSeed,
+    });
+
     // Seed sample data automatically in development or when explicitly enabled in production.
-    if (process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true') {
+    if (shouldSeed) {
       try {
         await this.seed();
       } catch (error) {

@@ -53,6 +53,7 @@ export class StaffService {
   async findOne(id: number): Promise<Staff> {
     const staff = await this.staffRepository.findOne({
       where: { id },
+      select: ['id', 'username', 'email', 'role', 'password_hash'],
     });
 
     if (!staff) {
@@ -65,12 +66,14 @@ export class StaffService {
   async findByUsername(username: string): Promise<Staff | null> {
     return await this.staffRepository.findOne({
       where: { username },
+      select: ['id', 'username', 'email', 'role', 'password_hash'],
     });
   }
 
   async findByEmail(email: string): Promise<Staff | null> {
     return await this.staffRepository.findOne({
       where: { email },
+      select: ['id', 'username', 'email', 'role', 'password_hash'],
     });
   }
 
@@ -115,7 +118,7 @@ export class StaffService {
 
   async findAll(): Promise<Staff[]> {
     return await this.staffRepository.find({
-      select: ['id', 'username', 'role', 'email', 'phone'], // Don't include password_hash
+      select: ['id', 'username', 'role', 'email'], // Don't include password_hash or phone
     });
   }
 
