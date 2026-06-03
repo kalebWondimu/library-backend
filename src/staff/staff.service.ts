@@ -130,9 +130,9 @@ export class StaffService {
     });
   }
 
-  async update(id: number, updateData: Partial<Staff>): Promise<Staff> {
+  async update(id: number, updateData: Partial<Staff> & { password?: string }): Promise<Staff> {
     const staff = await this.findOne(id);
-    const sanitizedData = { ...updateData } as Partial<Staff>;
+    const sanitizedData = { ...updateData } as Partial<Staff> & { password?: string };
 
     if ('password' in sanitizedData && sanitizedData.password) {
       sanitizedData.password_hash = await bcrypt.hash(
@@ -148,8 +148,8 @@ export class StaffService {
     return await this.staffRepository.save(staff);
   }
 
-  async updateProfile(currentUser: Staff, updateData: Partial<Staff>): Promise<Staff> {
-    const safeData: Partial<Staff> = { ...updateData };
+  async updateProfile(currentUser: Staff, updateData: Partial<Staff> & { password?: string }): Promise<Staff> {
+    const safeData = { ...updateData } as Partial<Staff> & { password?: string };
 
     if (currentUser.role !== 'super-admin') {
       // Admin and librarian demo accounts may only update profile fields, not password or role.
