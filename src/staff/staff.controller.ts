@@ -16,19 +16,19 @@ export class StaffController {
   constructor(private readonly staffService: StaffService) { }
 
   @Get()
-  @Roles('super-admin')
+  @Roles('super-admin', 'admin')
   @ApiOperation({ summary: 'Get all staff members' })
   @ApiResponse({ status: 200, description: 'Staff retrieved successfully', type: [Staff] })
-  findAll(): Promise<Staff[]> {
+  findAll(@Request() req: any): Promise<Staff[]> {
     return this.staffService.findAll();
   }
 
   @Post()
-  @Roles('super-admin')
+  @Roles('super-admin', 'admin')
   @ApiOperation({ summary: 'Create a new staff member' })
   @ApiResponse({ status: 201, description: 'Staff created successfully', type: Staff })
-  create(@Body() createStaffDto: CreateStaffDto): Promise<Staff> {
-    return this.staffService.create(createStaffDto);
+  create(@Body() createStaffDto: CreateStaffDto, @Request() req: any): Promise<Staff> {
+    return this.staffService.create(createStaffDto, req.user);
   }
 
   @Patch('me')
@@ -39,22 +39,22 @@ export class StaffController {
   }
 
   @Patch(':id')
-  @Roles('super-admin')
+  @Roles('super-admin', 'admin')
   @ApiOperation({ summary: 'Update a staff member' })
   @ApiResponse({ status: 200, description: 'Staff updated successfully', type: Staff })
   @ApiResponse({ status: 404, description: 'Staff not found' })
   @ApiParam({ name: 'id', description: 'Staff ID' })
-  update(@Param('id') id: string, @Body() updateStaffDto: UpdateStaffDto): Promise<Staff> {
-    return this.staffService.update(+id, updateStaffDto);
+  update(@Param('id') id: string, @Body() updateStaffDto: UpdateStaffDto, @Request() req: any): Promise<Staff> {
+    return this.staffService.update(+id, updateStaffDto, req.user);
   }
 
   @Delete(':id')
-  @Roles('super-admin')
+  @Roles('super-admin', 'admin')
   @ApiOperation({ summary: 'Delete a staff member' })
   @ApiResponse({ status: 200, description: 'Staff deleted successfully' })
   @ApiResponse({ status: 404, description: 'Staff not found' })
   @ApiParam({ name: 'id', description: 'Staff ID' })
-  remove(@Param('id') id: string): Promise<void> {
-    return this.staffService.remove(+id);
+  remove(@Param('id') id: string, @Request() req: any): Promise<void> {
+    return this.staffService.remove(+id, req.user);
   }
 } 

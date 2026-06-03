@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,7 +17,14 @@ export class StaffService {
     private staffRepository: Repository<Staff>,
   ) { }
 
-  async create(createStaffDto: CreateStaffDto): Promise<Staff> {
+  async create(createStaffDto: CreateStaffDto, currentUser?: Staff): Promise<Staff> {
+    // Role-based permission check
+    if (currentUser && currentUser.role === 'admin') {
+      // Admin can only create librarian role
+      if (createStaffDto.role !== 'librarian') {
+        throw new ForbiddenException('Admin can only create librarian staff members');
+      }
+    }
     // Check if username already exists
     const existingUser = await this.staffRepository.findOne({
       where: { username: createStaffDto.username },
@@ -130,8 +138,17 @@ export class StaffService {
     });
   }
 
-  async update(id: number, updateData: Partial<Staff> & { password?: string }): Promise<Staff> {
+  async update(id: number, updateData: Partial<Staff> & { password?: string }, currentUser?: Staff): Promise<Staff> {
     const staff = await this.findOne(id);
+
+    // Role-based permission check
+    if (currentUser && currentUser.role === 'admin') {
+      // Admin can only edit librarians, not other admins/super-admins
+      if (staff.role !== 'librarian') {
+        throw new ForbiddenException('Admin can only edit librarian staff members');
+      }
+    }
+
     const sanitizedData = { ...updateData } as Partial<Staff> & { password?: string };
 
     if ('password' in sanitizedData && sanitizedData.password) {
@@ -161,8 +178,22 @@ export class StaffService {
     return this.update(currentUser.id, safeData);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, currentUser?: Staff): Promise<void> {
     const staff = await this.findOne(id);
+
+    // Protect demo accounts
+    if (['admin@library.com', 'librarian@library.com', 'superadmin@library.com'].includes(staff.email)) {
+      throw new ForbiddenException('Cannot delete demo accounts');
+    }
+
+    // Role-based permission check
+    if (currentUser && currentUser.role === 'admin') {
+      // Admin can only delete librarians, not other admins/super-admins
+      if (staff.role !== 'librarian') {
+        throw new ForbiddenException('Admin can only delete librarian staff members');
+      }
+    }
+
     await this.staffRepository.remove(staff);
   }
 }
