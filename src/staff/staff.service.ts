@@ -64,17 +64,19 @@ export class StaffService {
   }
 
   async findByUsername(username: string): Promise<Staff | null> {
-    return await this.staffRepository.findOne({
-      where: { username },
-      select: ['id', 'username', 'email', 'role', 'password_hash'],
-    });
+    const normalizedUsername = username.trim().toLowerCase();
+    return await this.staffRepository.createQueryBuilder('staff')
+      .select(['staff.id', 'staff.username', 'staff.email', 'staff.role', 'staff.password_hash'])
+      .where('LOWER(TRIM(staff.username)) = :username', { username: normalizedUsername })
+      .getOne();
   }
 
   async findByEmail(email: string): Promise<Staff | null> {
-    return await this.staffRepository.findOne({
-      where: { email },
-      select: ['id', 'username', 'email', 'role', 'password_hash'],
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+    return await this.staffRepository.createQueryBuilder('staff')
+      .select(['staff.id', 'staff.username', 'staff.email', 'staff.role', 'staff.password_hash'])
+      .where('LOWER(TRIM(staff.email)) = :email', { email: normalizedEmail })
+      .getOne();
   }
 
   async validateUser(email: string, password: string): Promise<Staff | null> {
@@ -122,18 +124,41 @@ export class StaffService {
     });
   }
 
+  async findAllDebug(): Promise<Staff[]> {
+    return await this.staffRepository.find({
+      select: ['id', 'username', 'role', 'email', 'password_hash'],
+    });
+  }
+
   async update(id: number, updateData: Partial<Staff>): Promise<Staff> {
     const staff = await this.findOne(id);
+    const sanitizedData = { ...updateData } as Partial<Staff>;
 
-    if (updateData.password_hash) {
-      updateData.password_hash = await bcrypt.hash(
-        updateData.password_hash,
+    if ('password' in sanitizedData && sanitizedData.password) {
+      sanitizedData.password_hash = await bcrypt.hash(
+        sanitizedData.password,
         10,
       );
+      delete sanitizedData.password;
     }
 
-    Object.assign(staff, updateData);
+    delete sanitizedData.password;
+
+    Object.assign(staff, sanitizedData);
     return await this.staffRepository.save(staff);
+  }
+
+  async updateProfile(currentUser: Staff, updateData: Partial<Staff>): Promise<Staff> {
+    const safeData: Partial<Staff> = { ...updateData };
+
+    if (currentUser.role !== 'super-admin') {
+      // Admin and librarian demo accounts may only update profile fields, not password or role.
+      delete safeData.password;
+    }
+
+    delete safeData.role;
+
+    return this.update(currentUser.id, safeData);
   }
 
   async remove(id: number): Promise<void> {

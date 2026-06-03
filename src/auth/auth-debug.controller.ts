@@ -5,13 +5,13 @@ import { StaffService } from '../staff/staff.service';
 @ApiTags('debug')
 @Controller('debug')
 export class AuthDebugController {
-  constructor(private readonly staffService: StaffService) {}
+  constructor(private readonly staffService: StaffService) { }
 
   @Get('users')
   @ApiOperation({ summary: 'Get all staff users (debug only)' })
   async getAllUsers() {
     try {
-      const users = await this.staffService.findAll();
+      const users = await this.staffService.findAllDebug();
       return {
         success: true,
         count: users.length,
@@ -37,9 +37,9 @@ export class AuthDebugController {
     try {
       const testEmail = 'admin@library.com';
       const testPassword = 'password123';
-      
+
       const user = await this.staffService.validateUser(testEmail, testPassword);
-      
+
       return {
         email: testEmail,
         password: testPassword,

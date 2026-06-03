@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { StaffService } from './staff.service';
 import { Staff } from '../entities/staff.entity';
@@ -13,10 +13,10 @@ import { UpdateStaffDto } from './dto/update-staff.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class StaffController {
-  constructor(private readonly staffService: StaffService) {}
+  constructor(private readonly staffService: StaffService) { }
 
   @Get()
-  @Roles('admin')
+  @Roles('super-admin')
   @ApiOperation({ summary: 'Get all staff members' })
   @ApiResponse({ status: 200, description: 'Staff retrieved successfully', type: [Staff] })
   findAll(): Promise<Staff[]> {
@@ -24,15 +24,22 @@ export class StaffController {
   }
 
   @Post()
-  @Roles('admin')
+  @Roles('super-admin')
   @ApiOperation({ summary: 'Create a new staff member' })
   @ApiResponse({ status: 201, description: 'Staff created successfully', type: Staff })
   create(@Body() createStaffDto: CreateStaffDto): Promise<Staff> {
     return this.staffService.create(createStaffDto);
   }
 
+  @Patch('me')
+  @ApiOperation({ summary: 'Update own profile' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully', type: Staff })
+  async updateProfile(@Request() req: any, @Body() updateStaffDto: UpdateStaffDto): Promise<Staff> {
+    return this.staffService.updateProfile(req.user, updateStaffDto);
+  }
+
   @Patch(':id')
-  @Roles('admin')
+  @Roles('super-admin')
   @ApiOperation({ summary: 'Update a staff member' })
   @ApiResponse({ status: 200, description: 'Staff updated successfully', type: Staff })
   @ApiResponse({ status: 404, description: 'Staff not found' })
@@ -42,7 +49,7 @@ export class StaffController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('super-admin')
   @ApiOperation({ summary: 'Delete a staff member' })
   @ApiResponse({ status: 200, description: 'Staff deleted successfully' })
   @ApiResponse({ status: 404, description: 'Staff not found' })
