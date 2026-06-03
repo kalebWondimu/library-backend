@@ -11,13 +11,19 @@ export const createNestServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
   // ✅ Enable CORS for local + deployed frontend
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : [
+      'http://localhost:3000',
+      'https://library-frontend-theta-drab.vercel.app',
+    ];
+
+  console.log('Allowed CORS origins:', allowedOrigins);
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',               
-      'https://library-frontend-theta-drab.vercel.app', 
-    ],
-    methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization','Accept'],
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   });
 
