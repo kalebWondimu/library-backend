@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { BorrowRecordsService } from './borrow-records.service';
 import { BorrowBookDto, ReturnBookDto } from '../dto/borrow-record.dto';
@@ -44,6 +44,14 @@ export class BorrowRecordsController {
   @ApiParam({ name: 'id', description: 'Borrow record ID' })
   findOne(@Param('id') id: string): Promise<BorrowRecord> {
     return this.borrowRecordsService.findOne(+id);
+  }
+
+  @Delete(':id')
+  @Roles('admin', 'librarian')
+  @ApiOperation({ summary: 'Delete a borrow record' })
+  @ApiResponse({ status: 200, description: 'Borrow record deleted successfully' })
+  remove(@Param('id') id: string): Promise<void> {
+    return this.borrowRecordsService.remove(+id);
   }
 
   @Get('reports/overdue')

@@ -66,6 +66,22 @@ export class BorrowRecordsService {
     return updatedRecord;
   }
 
+  async remove(id: number): Promise<void> {
+    const borrowRecord = await this.borrowRecordsRepository.findOne({
+      where: { id },
+    });
+
+    if (!borrowRecord) {
+      throw new NotFoundException(`Borrow record with ID ${id} not found`);
+    }
+
+    if (!borrowRecord.return_date) {
+      await this.booksService.updateAvailableCopies(borrowRecord.book_id, 1);
+    }
+
+    await this.borrowRecordsRepository.remove(borrowRecord);
+  }
+
   async getOverdueBooks(): Promise<BorrowRecord[]> {
     const today = new Date();
 
