@@ -12,10 +12,10 @@ import { CreateGenreDto } from './dto/create-genre.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class GenresController {
-  constructor(private readonly genresService: GenresService) {}
+  constructor(private readonly genresService: GenresService) { }
 
   @Post()
-  @Roles('admin')
+  @Roles('admin', 'super-admin')
   @ApiOperation({ summary: 'Create a new genre' })
   @ApiResponse({ status: 201, description: 'Genre created successfully', type: Genre })
   create(@Body() createGenreDto: CreateGenreDto): Promise<Genre> {
@@ -39,7 +39,7 @@ export class GenresController {
   }
 
   @Patch(':id')
-  @Roles('admin')
+  @Roles('admin', 'super-admin')
   @ApiOperation({ summary: 'Update a genre' })
   @ApiResponse({ status: 200, description: 'Genre updated successfully', type: Genre })
   @ApiResponse({ status: 404, description: 'Genre not found' })
@@ -49,7 +49,7 @@ export class GenresController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'super-admin')
   @ApiOperation({ summary: 'Delete a genre' })
   @ApiResponse({ status: 200, description: 'Genre deleted successfully' })
   @ApiResponse({ status: 404, description: 'Genre not found' })

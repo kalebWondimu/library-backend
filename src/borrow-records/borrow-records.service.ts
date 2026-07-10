@@ -17,7 +17,7 @@ export class BorrowRecordsService {
     private membersService: MembersService,
   ) { }
 
-  async borrowBook(borrowBookDto: BorrowBookDto): Promise<BorrowRecord> {
+  async borrowBook(borrowBookDto: BorrowBookDto, currentUser?: any): Promise<BorrowRecord> {
     // Verify book and member exist
     const book = await this.booksService.findOne(borrowBookDto.book_id);
     await this.membersService.findOne(borrowBookDto.member_id);
@@ -34,6 +34,11 @@ export class BorrowRecordsService {
       due_date: new Date(borrowBookDto.due_date),
     });
 
+    if (currentUser?.is_demo) {
+      // Return transient record without persisting
+      return { ...borrowRecord, id: -(Date.now()) } as BorrowRecord;
+    }
+
     const savedRecord = await this.borrowRecordsRepository.save(borrowRecord);
 
     // Update available copies
@@ -42,7 +47,7 @@ export class BorrowRecordsService {
     return savedRecord;
   }
 
-  async returnBook(returnBookDto: ReturnBookDto): Promise<BorrowRecord> {
+  async returnBook(returnBookDto: ReturnBookDto, currentUser?: any): Promise<BorrowRecord> {
     const borrowRecord = await this.borrowRecordsRepository.findOne({
       where: { id: returnBookDto.borrow_record_id },
       relations: ['book'],
@@ -58,6 +63,11 @@ export class BorrowRecordsService {
 
     // Update return date
     borrowRecord.return_date = new Date();
+
+    if (currentUser?.is_demo) {
+      return borrowRecord;
+    }
+
     const updatedRecord = await this.borrowRecordsRepository.save(borrowRecord);
 
     // Update available copies
@@ -66,13 +76,17 @@ export class BorrowRecordsService {
     return updatedRecord;
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, currentUser?: any): Promise<void> {
     const borrowRecord = await this.borrowRecordsRepository.findOne({
       where: { id },
     });
 
     if (!borrowRecord) {
       throw new NotFoundException(`Borrow record with ID ${id} not found`);
+    }
+
+    if (currentUser?.is_demo) {
+      return;
     }
 
     if (!borrowRecord.return_date) {

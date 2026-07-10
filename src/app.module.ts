@@ -34,18 +34,31 @@ const databaseUrl = process.env.DATABASE_URL || (() => {
   return undefined;
 })();
 
+// When running tests, prefer an in-memory Sqlite DB to avoid external dependencies,
+// but allow opting into the real DB for live integration runs by setting USE_REAL_DB=true.
+const isTestEnv = process.env.NODE_ENV === 'test';
+const useRealDb = process.env.USE_REAL_DB === 'true';
+
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: databaseUrl,
-      ssl: process.env.DATABASE_SSL === 'true'
-        ? { rejectUnauthorized: false }
-        : false,
-      entities: [Book, Member, BorrowRecord, Genre, Staff],
-      // Enable synchronize for fresh databases or when explicitly seeding
-      synchronize: process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true',
-    }),
+    TypeOrmModule.forRoot(
+      // Use sqlite in-memory only when running tests AND not explicitly requesting the real DB
+      isTestEnv && !useRealDb
+        ? {
+          type: 'sqlite',
+          database: ':memory:',
+          entities: [Book, Member, BorrowRecord, Genre, Staff],
+          synchronize: true,
+        }
+        : {
+          type: 'postgres',
+          url: databaseUrl,
+          ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+          entities: [Book, Member, BorrowRecord, Genre, Staff],
+          // Enable synchronize for fresh databases or when explicitly seeding
+          synchronize: process.env.NODE_ENV !== 'production' || process.env.SEED_DATABASE === 'true',
+        },
+    ),
     BooksModule,
     MembersModule,
     BorrowRecordsModule,

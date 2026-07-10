@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { CreateMemberDto, UpdateMemberDto } from '../dto/member.dto';
@@ -16,11 +16,11 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) { }
 
   @Post()
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Create a new member' })
   @ApiResponse({ status: 201, description: 'Member created successfully', type: Member })
-  create(@Body() createMemberDto: CreateMemberDto): Promise<Member> {
-    return this.membersService.create(createMemberDto);
+  create(@Request() req: any, @Body() createMemberDto: CreateMemberDto): Promise<Member> {
+    return this.membersService.create(createMemberDto, req.user);
   }
 
   @Get()
@@ -56,22 +56,22 @@ export class MembersController {
   }
 
   @Patch(':id')
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Update a member' })
   @ApiResponse({ status: 200, description: 'Member updated successfully', type: Member })
   @ApiResponse({ status: 404, description: 'Member not found' })
   @ApiParam({ name: 'id', description: 'Member ID' })
-  update(@Param('id') id: string, @Body() updateMemberDto: UpdateMemberDto): Promise<Member> {
-    return this.membersService.update(+id, updateMemberDto);
+  update(@Request() req: any, @Param('id') id: string, @Body() updateMemberDto: UpdateMemberDto): Promise<Member> {
+    return this.membersService.update(+id, updateMemberDto, req.user);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'super-admin')
   @ApiOperation({ summary: 'Delete a member' })
   @ApiResponse({ status: 200, description: 'Member deleted successfully' })
   @ApiResponse({ status: 404, description: 'Member not found' })
   @ApiParam({ name: 'id', description: 'Member ID' })
-  remove(@Param('id') id: string): Promise<void> {
-    return this.membersService.remove(+id);
+  remove(@Request() req: any, @Param('id') id: string): Promise<void> {
+    return this.membersService.remove(+id, req.user);
   }
 } 

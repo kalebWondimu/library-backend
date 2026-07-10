@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { BorrowRecordsService } from './borrow-records.service';
 import { BorrowBookDto, ReturnBookDto } from '../dto/borrow-record.dto';
@@ -15,19 +15,19 @@ export class BorrowRecordsController {
   constructor(private readonly borrowRecordsService: BorrowRecordsService) { }
 
   @Post('borrow')
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Borrow a book' })
   @ApiResponse({ status: 201, description: 'Book borrowed successfully', type: BorrowRecord })
-  borrowBook(@Body() borrowBookDto: BorrowBookDto): Promise<BorrowRecord> {
-    return this.borrowRecordsService.borrowBook(borrowBookDto);
+  borrowBook(@Request() req: any, @Body() borrowBookDto: BorrowBookDto): Promise<BorrowRecord> {
+    return this.borrowRecordsService.borrowBook(borrowBookDto, req.user);
   }
 
   @Post('return')
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Return a book' })
   @ApiResponse({ status: 200, description: 'Book returned successfully', type: BorrowRecord })
-  returnBook(@Body() returnBookDto: ReturnBookDto): Promise<BorrowRecord> {
-    return this.borrowRecordsService.returnBook(returnBookDto);
+  returnBook(@Request() req: any, @Body() returnBookDto: ReturnBookDto): Promise<BorrowRecord> {
+    return this.borrowRecordsService.returnBook(returnBookDto, req.user);
   }
 
   @Get()
@@ -47,11 +47,11 @@ export class BorrowRecordsController {
   }
 
   @Delete(':id')
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Delete a borrow record' })
   @ApiResponse({ status: 200, description: 'Borrow record deleted successfully' })
-  remove(@Param('id') id: string): Promise<void> {
-    return this.borrowRecordsService.remove(+id);
+  remove(@Request() req: any, @Param('id') id: string): Promise<void> {
+    return this.borrowRecordsService.remove(+id, req.user);
   }
 
   @Get('reports/overdue')

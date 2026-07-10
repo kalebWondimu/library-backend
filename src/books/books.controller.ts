@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BooksService } from './books.service';
 import { CreateBookDto, UpdateBookDto, FilterBookDto } from '../dto/book.dto';
@@ -12,14 +12,14 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class BooksController {
-  constructor(private readonly booksService: BooksService) {}
+  constructor(private readonly booksService: BooksService) { }
 
   @Post()
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Create a new book' })
   @ApiResponse({ status: 201, description: 'Book created successfully', type: Book })
-  create(@Body() createBookDto: CreateBookDto): Promise<Book> {
-    return this.booksService.create(createBookDto);
+  create(@Request() req: any, @Body() createBookDto: CreateBookDto): Promise<Book> {
+    return this.booksService.create(createBookDto, req.user);
   }
 
   @Get()
@@ -41,22 +41,22 @@ export class BooksController {
   }
 
   @Patch(':id')
-  @Roles('admin', 'librarian')
+  @Roles('admin', 'librarian', 'super-admin')
   @ApiOperation({ summary: 'Update a book' })
   @ApiResponse({ status: 200, description: 'Book updated successfully', type: Book })
   @ApiResponse({ status: 404, description: 'Book not found' })
   @ApiParam({ name: 'id', description: 'Book ID' })
-  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto): Promise<Book> {
-    return this.booksService.update(+id, updateBookDto);
+  update(@Request() req: any, @Param('id') id: string, @Body() updateBookDto: UpdateBookDto): Promise<Book> {
+    return this.booksService.update(+id, updateBookDto, req.user);
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('admin', 'super-admin')
   @ApiOperation({ summary: 'Delete a book' })
   @ApiResponse({ status: 200, description: 'Book deleted successfully' })
   @ApiResponse({ status: 404, description: 'Book not found' })
   @ApiParam({ name: 'id', description: 'Book ID' })
-  remove(@Param('id') id: string): Promise<void> {
-    return this.booksService.remove(+id);
+  remove(@Request() req: any, @Param('id') id: string): Promise<void> {
+    return this.booksService.remove(+id, req.user);
   }
 } 

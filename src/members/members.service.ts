@@ -19,11 +19,18 @@ export class MembersService {
     private borrowRecordsRepository: Repository<BorrowRecord>,
   ) { }
 
-  async create(createMemberDto: CreateMemberDto): Promise<Member> {
+  async create(createMemberDto: CreateMemberDto, currentUser?: any): Promise<Member> {
     const member = this.membersRepository.create({
       ...createMemberDto,
       join_date: new Date(createMemberDto.join_date),
     });
+
+    // Demo accounts: do not persist changes permanently
+    if (currentUser?.is_demo) {
+      // Return a transient member object (no DB save)
+      return { ...member, id: -(Date.now()) } as Member;
+    }
+
     return this.membersRepository.save(member);
   }
 
@@ -58,14 +65,20 @@ export class MembersService {
     return member;
   }
 
-  async update(id: number, updateMemberDto: UpdateMemberDto): Promise<Member> {
+  async update(id: number, updateMemberDto: UpdateMemberDto, currentUser?: any): Promise<Member> {
     const member = await this.findOne(id);
     Object.assign(member, updateMemberDto);
+
+    if (currentUser?.is_demo) {
+      // Return updated object without persisting
+      return member;
+    }
+
     return this.membersRepository.save(member);
   }
 
   // ✅ BLOCK delete if active borrows exist
-  async remove(id: number): Promise<void> {
+  async remove(id: number, currentUser?: any): Promise<void> {
     const activeBorrows = await this.borrowRecordsRepository.count({
       where: {
         member_id: id,
@@ -80,6 +93,12 @@ export class MembersService {
     }
 
     const member = await this.findOne(id);
+
+    if (currentUser?.is_demo) {
+      // Simulate deletion for demo users without persisting
+      return;
+    }
+
     await this.membersRepository.remove(member);
   }
 
