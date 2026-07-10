@@ -15,13 +15,21 @@ export class AuthService {
     console.log('=== AUTH SERVICE LOGIN ===');
     console.log('Login attempt for email:', loginDto.email);
 
-    const user = await this.staffService.validateUser(loginDto.email, loginDto.password);
+    let user = await this.staffService.validateUser(loginDto.email, loginDto.password);
 
     console.log('User found:', user ? `Yes (${user.username})` : 'No');
 
     if (!user) {
       console.log('Invalid credentials for email:', loginDto.email);
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.is_demo) {
+      await this.staffService.restoreDemoAccount(user.email);
+      const refreshedUser = await this.staffService.findByEmail(user.email);
+      if (refreshedUser) {
+        user = refreshedUser;
+      }
     }
 
     console.log('Login successful for user:', user.username);

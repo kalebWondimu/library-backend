@@ -19,4 +19,7 @@ export class Staff {
 
   @Column()
   role: string;
+
+  @Column({ default: false })
+  is_demo: boolean;
 } 

@@ -23,8 +23,8 @@ export class UpdateStaffDto {
   @MinLength(6)
   password?: string;
 
-  @ApiPropertyOptional({ description: 'User role', enum: ['admin', 'librarian'] })
+  @ApiPropertyOptional({ description: 'User role', enum: ['admin', 'librarian', 'super-admin'] })
   @IsOptional()
-  @IsEnum(['admin', 'librarian'])
-  role?: 'admin' | 'librarian';
+  @IsEnum(['admin', 'librarian', 'super-admin'])
+  role?: 'admin' | 'librarian' | 'super-admin';
 } 

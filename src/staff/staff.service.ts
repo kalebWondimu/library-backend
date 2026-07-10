@@ -61,7 +61,7 @@ export class StaffService {
   async findOne(id: number): Promise<Staff> {
     const staff = await this.staffRepository.findOne({
       where: { id },
-      select: ['id', 'username', 'email', 'role', 'password_hash'],
+      select: ['id', 'username', 'email', 'role', 'password_hash', 'is_demo'],
     });
 
     if (!staff) {
@@ -82,9 +82,30 @@ export class StaffService {
   async findByEmail(email: string): Promise<Staff | null> {
     const normalizedEmail = email.trim().toLowerCase();
     return await this.staffRepository.createQueryBuilder('staff')
-      .select(['staff.id', 'staff.username', 'staff.email', 'staff.role', 'staff.password_hash'])
+      .select(['staff.id', 'staff.username', 'staff.email', 'staff.role', 'staff.password_hash', 'staff.is_demo'])
       .where('LOWER(TRIM(staff.email)) = :email', { email: normalizedEmail })
       .getOne();
+  }
+
+  async restoreDemoAccount(email: string): Promise<void> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const demoAccounts: Record<string, { username: string; role: string; is_demo: boolean }> = {
+      'admin@library.com': { username: 'admin', role: 'admin', is_demo: true },
+      'librarian@library.com': { username: 'librarian', role: 'librarian', is_demo: true },
+    };
+
+    const baseline = demoAccounts[normalizedEmail];
+    if (!baseline) return;
+
+    const staff = await this.staffRepository.findOne({ where: { email: normalizedEmail } });
+    if (!staff) return;
+
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    staff.username = baseline.username;
+    staff.role = baseline.role;
+    staff.is_demo = baseline.is_demo;
+    staff.password_hash = hashedPassword;
+    await this.staffRepository.save(staff);
   }
 
   async validateUser(email: string, password: string): Promise<Staff | null> {
@@ -128,7 +149,7 @@ export class StaffService {
 
   async findAll(): Promise<Staff[]> {
     return await this.staffRepository.find({
-      select: ['id', 'username', 'role', 'email'], // Don't include password_hash or phone
+      select: ['id', 'username', 'role', 'email', 'is_demo'],
     });
   }
 
@@ -140,6 +161,10 @@ export class StaffService {
 
   async update(id: number, updateData: Partial<Staff> & { password?: string }, currentUser?: Staff): Promise<Staff> {
     const staff = await this.findOne(id);
+
+    if (staff.is_demo) {
+      throw new ForbiddenException('Demo accounts cannot be modified permanently');
+    }
 
     // Role-based permission check
     if (currentUser && currentUser.role === 'admin') {
@@ -169,13 +194,19 @@ export class StaffService {
     const safeData = { ...updateData } as Partial<Staff> & { password?: string };
 
     if (currentUser.role !== 'super-admin') {
-      // Admin and librarian demo accounts may only update profile fields, not password or role.
       delete safeData.password;
     }
 
     delete safeData.role;
 
-    return this.update(currentUser.id, safeData);
+    if (currentUser.is_demo) {
+      // Keep demo edits in-memory for the current request, but do not persist them.
+      const staff = await this.findOne(currentUser.id);
+      Object.assign(staff, safeData);
+      return staff;
+    }
+
+    return this.update(currentUser.id, safeData, currentUser);
   }
 
   async remove(id: number, currentUser?: Staff): Promise<void> {

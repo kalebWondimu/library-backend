@@ -20,22 +20,21 @@ export class SeederService implements OnModuleInit {
     private staffRepository: Repository<Staff>,
   ) { }
 
-  private async ensureStaffPhoneColumn() {
-    // In production with synchronize=false, this ensures phone exists on legacy DB tables
-    // For fresh databases, the table may not exist yet; TypeORM will create it on first sync
+  private async ensureStaffColumns() {
+    // In production with synchronize=false, this ensures phone and is_demo exist on legacy DB tables
     try {
       await this.staffRepository.query(`ALTER TABLE staff ADD COLUMN IF NOT EXISTS phone VARCHAR(255);`);
+      await this.staffRepository.query(`ALTER TABLE staff ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT false;`);
     } catch (error) {
       if (error.code === '42P01') {
-        // Table doesn't exist yet (fresh database), skip this step
-        console.log('Staff table not yet created; skipping phone column check.');
+        console.log('Staff table not yet created; skipping staff column checks.');
       } else {
         throw error;
       }
     }
   }
 
-  private async ensureDefaultStaffUser(email: string, username: string, role: string) {
+  private async ensureDefaultStaffUser(email: string, username: string, role: string, isDemo = false) {
     const user = await this.staffRepository.findOne({ where: { email } });
     const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -45,25 +44,27 @@ export class SeederService implements OnModuleInit {
         email,
         password_hash: hashedPassword,
         role,
+        is_demo: isDemo,
       });
       await this.staffRepository.save(created);
       console.log(`Default ${role} user created: ${email} / password123`);
       return created;
     }
 
-    if (!user.password_hash) {
+    if (!user.password_hash || user.is_demo !== isDemo || user.username !== username || user.role !== role) {
       user.password_hash = hashedPassword;
       user.username = username;
       user.role = role;
+      user.is_demo = isDemo;
       await this.staffRepository.save(user);
-      console.log(`Default ${role} password restored for existing user: ${email}`);
+      console.log(`Default ${role} user restored for existing user: ${email}`);
     }
 
     return user;
   }
 
   async seed() {
-    await this.ensureStaffPhoneColumn();
+    await this.ensureStaffColumns();
 
     // ---------- Seed genres ----------
     const genres = [
@@ -114,20 +115,20 @@ export class SeederService implements OnModuleInit {
     }
 
     // ---------- Seed super admin ----------
-    await this.ensureDefaultStaffUser('superadmin@library.com', 'superadmin', 'super-admin');
+    await this.ensureDefaultStaffUser('superadmin@library.com', 'superadmin', 'super-admin', false);
 
-    // ---------- Seed admin ----------
-    await this.ensureDefaultStaffUser('admin@library.com', 'admin', 'admin');
+    // ---------- Seed admin demo ----------
+    await this.ensureDefaultStaffUser('admin@library.com', 'admin', 'admin', true);
 
-    // ---------- Seed librarian ----------
-    await this.ensureDefaultStaffUser('librarian@library.com', 'librarian', 'librarian');
+    // ---------- Seed librarian demo ----------
+    await this.ensureDefaultStaffUser('librarian@library.com', 'librarian', 'librarian', true);
 
     console.log('Database seeded successfully!');
   }
 
   async onModuleInit() {
     // Ensure schema compatibility for phone field in staff table
-    await this.ensureStaffPhoneColumn();
+    await this.ensureStaffColumns();
 
     const shouldSeed = process.env.NODE_ENV !== 'production' ||
       process.env.SEED_DATABASE?.toLowerCase() === 'true';

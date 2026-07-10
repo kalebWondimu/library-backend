@@ -20,7 +20,7 @@ export class CreateStaffDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'librarian', description: 'User role', enum: ['admin', 'librarian'] })
-  @IsEnum(['admin', 'librarian'])
-  role: 'admin' | 'librarian';
+  @ApiProperty({ example: 'librarian', description: 'User role', enum: ['admin', 'librarian', 'super-admin'] })
+  @IsEnum(['admin', 'librarian', 'super-admin'])
+  role: 'admin' | 'librarian' | 'super-admin';
 } 
