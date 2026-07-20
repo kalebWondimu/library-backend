@@ -117,19 +117,27 @@ export class MembersService {
 
     const memberActivity = await Promise.all(
       members.map(async (member) => {
-        const totalBorrows = await this.borrowRecordsRepository.count({
+        const borrowRecords = await this.borrowRecordsRepository.find({
           where: { member_id: member.id },
+          order: { borrow_date: 'DESC' },
         });
 
-        const outstandingBorrows = await this.borrowRecordsRepository.count({
-          where: { member_id: member.id, return_date: null },
-        });
+        const totalBorrows = borrowRecords.length;
+        const outstandingBorrows = borrowRecords.filter(
+          (b) => !b.return_date,
+        ).length;
+
+        // Get the most recent borrow date for filtering
+        const mostRecentBorrowDate =
+          borrowRecords.length > 0 ? borrowRecords[0].borrow_date : null;
 
         return {
           member_id: member.id,
           name: member.name,
           totalBorrows,
           outstandingBorrows,
+          borrow_date: mostRecentBorrowDate,
+          created_at: member.join_date || member.created_at,
         };
       }),
     );

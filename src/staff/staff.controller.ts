@@ -32,6 +32,7 @@ export class StaffController {
   }
 
   @Patch('me')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update own profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully', type: Staff })
   async updateProfile(@Request() req: any, @Body() updateStaffDto: UpdateStaffDto): Promise<Staff> {

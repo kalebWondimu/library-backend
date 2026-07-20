@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Staff {
@@ -22,4 +22,7 @@ export class Staff {
 
   @Column({ default: false })
   is_demo: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
 } 

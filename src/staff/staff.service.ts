@@ -149,7 +149,7 @@ export class StaffService {
 
   async findAll(): Promise<Staff[]> {
     return await this.staffRepository.find({
-      select: ['id', 'username', 'role', 'email', 'is_demo'],
+      select: ['id', 'username', 'role', 'email', 'phone', 'is_demo', 'created_at'],
     });
   }
 
@@ -166,11 +166,13 @@ export class StaffService {
       throw new ForbiddenException('Demo accounts cannot be modified permanently');
     }
 
-    // Role-based permission check
-    if (currentUser && currentUser.role === 'admin') {
-      // Admin can only edit librarians, not other admins/super-admins
-      if (staff.role !== 'librarian') {
-        throw new ForbiddenException('Admin can only edit librarian staff members');
+    // Role-based permission check - only applies if editing someone else
+    if (currentUser && currentUser.id !== staff.id) {
+      if (currentUser.role === 'admin') {
+        // Admin can only edit librarians, not other admins/super-admins
+        if (staff.role !== 'librarian') {
+          throw new ForbiddenException('Admin can only edit librarian staff members');
+        }
       }
     }
 
@@ -191,22 +193,27 @@ export class StaffService {
   }
 
   async updateProfile(currentUser: Staff, updateData: Partial<Staff> & { password?: string }): Promise<Staff> {
+    // Demo accounts cannot update profile
+    if (currentUser.is_demo) {
+      throw new ForbiddenException('Demo accounts cannot modify their profile');
+    }
+
     const safeData = { ...updateData } as Partial<Staff> & { password?: string };
 
-    if (currentUser.role !== 'super-admin') {
+    // Never allow role changes
+    delete safeData.role;
+
+    // Hash password if provided
+    if ('password' in safeData && safeData.password) {
+      safeData.password_hash = await bcrypt.hash(safeData.password, 10);
       delete safeData.password;
     }
 
-    delete safeData.role;
+    delete safeData.password;
 
-    if (currentUser.is_demo) {
-      // Keep demo edits in-memory for the current request, but do not persist them.
-      const staff = await this.findOne(currentUser.id);
-      Object.assign(staff, safeData);
-      return staff;
-    }
-
-    return this.update(currentUser.id, safeData, currentUser);
+    const staff = await this.findOne(currentUser.id);
+    Object.assign(staff, safeData);
+    return await this.staffRepository.save(staff);
   }
 
   async remove(id: number, currentUser?: Staff): Promise<void> {
