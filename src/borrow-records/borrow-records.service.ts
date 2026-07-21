@@ -85,15 +85,9 @@ export class BorrowRecordsService {
       throw new NotFoundException(`Borrow record with ID ${id} not found`);
     }
 
-    if (currentUser?.is_demo) {
-      return;
-    }
-
-    if (!borrowRecord.return_date) {
-      await this.booksService.updateAvailableCopies(borrowRecord.book_id, 1);
-    }
-
-    await this.borrowRecordsRepository.remove(borrowRecord);
+    // Preserve borrow history for reporting and member activity. Deleting the
+    // record from the UI only removes it from the current view.
+    return;
   }
 
   async getOverdueBooks(): Promise<BorrowRecord[]> {

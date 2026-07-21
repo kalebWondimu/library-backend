@@ -122,29 +122,38 @@ export class MembersService {
           order: { borrow_date: 'DESC' },
         });
 
-        const totalBorrows = borrowRecords.length;
+        const totalBorrows = borrowRecords.filter((record) => !!record.borrow_date).length;
+        const totalReturns = borrowRecords.filter((record) => !!record.return_date).length;
         const outstandingBorrows = borrowRecords.filter(
-          (b) => !b.return_date,
+          (record) => !record.return_date,
         ).length;
+        const totalTransactions = totalBorrows + totalReturns;
+        const completionRate = totalBorrows > 0
+          ? Math.round((totalReturns / totalBorrows) * 100)
+          : 0;
 
-        // Get the most recent borrow date for filtering
-        const mostRecentBorrowDate =
-          borrowRecords.length > 0 ? borrowRecords[0].borrow_date : null;
+        const latestActivity = borrowRecords.find(
+          (record) => record.return_date || record.borrow_date,
+        );
+        const lastActivityDate = latestActivity?.return_date || latestActivity?.borrow_date || null;
 
         return {
           member_id: member.id,
           name: member.name,
           totalBorrows,
+          totalReturns,
           outstandingBorrows,
-          borrow_date: mostRecentBorrowDate,
-          created_at: member.join_date || member.created_at,
+          totalTransactions,
+          completionRate,
+          lastActivityDate,
+          borrow_date: lastActivityDate,
+          created_at: member.join_date || (member as any).created_at || new Date(),
         };
       }),
     );
 
-    // return top 10 active members by borrow count
     return memberActivity
-      .sort((a, b) => b.totalBorrows - a.totalBorrows)
+      .sort((a, b) => b.totalTransactions - a.totalTransactions)
       .slice(0, 10);
   }
 }
