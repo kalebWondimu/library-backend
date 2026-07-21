@@ -25,12 +25,6 @@ export class MembersService {
       join_date: new Date(createMemberDto.join_date),
     });
 
-    // Demo accounts: do not persist changes permanently
-    if (currentUser?.is_demo) {
-      // Return a transient member object (no DB save)
-      return { ...member, id: -(Date.now()) } as Member;
-    }
-
     return this.membersRepository.save(member);
   }
 
@@ -68,12 +62,6 @@ export class MembersService {
   async update(id: number, updateMemberDto: UpdateMemberDto, currentUser?: any): Promise<Member> {
     const member = await this.findOne(id);
     Object.assign(member, updateMemberDto);
-
-    if (currentUser?.is_demo) {
-      // Return updated object without persisting
-      return member;
-    }
-
     return this.membersRepository.save(member);
   }
 
@@ -93,12 +81,6 @@ export class MembersService {
     }
 
     const member = await this.findOne(id);
-
-    if (currentUser?.is_demo) {
-      // Simulate deletion for demo users without persisting
-      return;
-    }
-
     await this.membersRepository.remove(member);
   }
 

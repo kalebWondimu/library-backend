@@ -62,4 +62,17 @@ describe('BorrowRecordsService', () => {
 
         expect(repository.remove).not.toHaveBeenCalled();
     });
+
+    it('persists borrow records even when the current user is a demo account', async () => {
+        const borrowBookDto = { book_id: 1, member_id: 2, due_date: '2026-07-21' };
+        repository.create.mockReturnValue({ ...borrowBookDto, borrow_date: new Date() });
+        repository.save.mockResolvedValue({ id: 12, ...borrowBookDto });
+        (service as any).booksService.findOne = jest.fn().mockResolvedValue({ available_copies: 2 });
+        (service as any).membersService.findOne = jest.fn().mockResolvedValue({ id: 2 });
+
+        const result = await service.borrowBook(borrowBookDto, { is_demo: true });
+
+        expect(repository.save).toHaveBeenCalled();
+        expect(result.id).toBe(12);
+    });
 });

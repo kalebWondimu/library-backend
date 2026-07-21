@@ -13,11 +13,6 @@ export class BooksService {
 
   async create(createBookDto: CreateBookDto, currentUser?: any): Promise<Book> {
     const book = this.booksRepository.create(createBookDto);
-
-    if (currentUser?.is_demo) {
-      return { ...book, id: -(Date.now()) } as Book;
-    }
-
     return await this.booksRepository.save(book);
   }
 
@@ -57,21 +52,11 @@ export class BooksService {
   async update(id: number, updateBookDto: UpdateBookDto, currentUser?: any): Promise<Book> {
     const book = await this.findOne(id);
     Object.assign(book, updateBookDto);
-
-    if (currentUser?.is_demo) {
-      return book;
-    }
-
     return await this.booksRepository.save(book);
   }
 
   async remove(id: number, currentUser?: any): Promise<void> {
     const book = await this.findOne(id);
-
-    if (currentUser?.is_demo) {
-      return;
-    }
-
     await this.booksRepository.remove(book);
   }
 

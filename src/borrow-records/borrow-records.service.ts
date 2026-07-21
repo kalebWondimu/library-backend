@@ -34,11 +34,6 @@ export class BorrowRecordsService {
       due_date: new Date(borrowBookDto.due_date),
     });
 
-    if (currentUser?.is_demo) {
-      // Return transient record without persisting
-      return { ...borrowRecord, id: -(Date.now()) } as BorrowRecord;
-    }
-
     const savedRecord = await this.borrowRecordsRepository.save(borrowRecord);
 
     // Update available copies
@@ -63,10 +58,6 @@ export class BorrowRecordsService {
 
     // Update return date
     borrowRecord.return_date = new Date();
-
-    if (currentUser?.is_demo) {
-      return borrowRecord;
-    }
 
     const updatedRecord = await this.borrowRecordsRepository.save(borrowRecord);
 
